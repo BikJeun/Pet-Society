@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS fulltimer CASCADE;
+
+CREATE TABLE fulltimer (
+    email VARCHAR(100) NOT NULL PRIMARY KEY REFERENCES caretaker
+);

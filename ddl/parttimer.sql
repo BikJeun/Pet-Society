@@ -1,0 +1,5 @@
+DROP TABLE IF NOT EXISTS parttimer CASCADE;
+
+CREATE TABLE parttimer (
+    email VARCHAR(100) NOT NULL PRIMARY KEY REFERENCES caretaker
+);
