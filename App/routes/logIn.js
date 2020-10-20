@@ -44,11 +44,18 @@ router.post('/signup', function(req, res, next) {
   var firstname = req.body.firstname;
   var lastname = req.body.lastname;
   var address = req.body.address;
+  var type = req.body.chooseone;
  
   console.log("Signing Up!\nEmail: " + email + "\nPassword: " + password);
 
 	pool.query(sql_query.query.create_user, [email, password, firstname, lastname, address], (err, data) => {	
-      console.log("New user created!");
+      if (data.rows.length > 0) {
+        console.log("New user created!");
+      } else {
+        console.log("Sign up unsuccessful!\nEmail already exists!");
+        console.log("Type is of acc: " + type);
+        res.redirect('/signup');
+      }
 	});
 });
 module.exports = router;

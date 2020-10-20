@@ -1,5 +1,5 @@
 --FOR REFERENCE ATM, NOT SURE HOW TO USE (WILL FIGURE OUT SOON)
-
+/*
 DROP TABLE IF EXISTS PCSAdmin cascade;
 
 CREATE TABLE PCSAdmin (
@@ -112,4 +112,32 @@ CREATE TABLE users (
     address VARCHAR(200) NOT NULL,
     verified boolean default false,
     dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
+); */
+
+
+CREATE TABLE users (
+    email VARCHAR(100) NOT NULL PRIMARY KEY,
+    password VARCHAR(100) NOT NULL,
+    firstName varchar(200) NOT NULL,
+    lastName varchar(200) NOT NULL,
+    address VARCHAR(200) NOT NULL,
+    verified boolean default false,
+    dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
 );
+
+CREATE OR REPLACE FUNCTION user_already_exists()
+RETURNS TRIGGER AS 
+$$ DECLARE ctx NUMERIC;
+    BEGIN
+        SELECT COUNT(*) INTO ctx FROM users U
+        WHERE NEW.email = U.email;
+        IF CTX > 0 THEN
+            RETURN NULL;
+        ELSE
+            RETURN NEW;
+        END IF; END; $$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_if_exist 
+BEFORE INSERT ON users
+FOR EACH ROW EXECUTE PROCEDURE user_already_exists();
