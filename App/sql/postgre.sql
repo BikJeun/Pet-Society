@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS PCSAdmin cascade;
 
 CREATE TABLE PCSAdmin (
     email VARCHAR(100) NOT NULL PRIMARY KEY,
-    FOREIGN KEY (email) REFERENCES user
+    FOREIGN KEY (email) REFERENCES users
 );
 
 DROP TABLE IF EXISTS availability CASCADE;
@@ -125,6 +125,8 @@ CREATE TABLE users (
     dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
 );
 
+-- trigger to see if user email already exists in db before insertion
+-- low level
 CREATE OR REPLACE FUNCTION user_already_exists()
 RETURNS TRIGGER AS 
 $$ DECLARE ctx NUMERIC;
@@ -141,3 +143,38 @@ LANGUAGE plpgsql;
 CREATE TRIGGER check_if_exist 
 BEFORE INSERT ON users
 FOR EACH ROW EXECUTE PROCEDURE user_already_exists();
+
+-- ON DELETE CASCADE for all ISA (since it is covering)?
+CREATE TABLE petOwner (
+    email VARCHAR(100) NOT NULL PRIMARY KEY,
+    FOREIGN KEY (email) REFERENCES users
+);
+
+CREATE TABLE caretaker (
+    email VARCHAR(100) NOT NULL PRIMARY KEY,
+    FOREIGN KEY (email) REFERENCES users
+);
+
+CREATE TABLE fulltimer (
+    email VARCHAR(100) NOT NULL PRIMARY KEY REFERENCES caretaker
+);
+
+CREATE TABLE parttimer (
+    email VARCHAR(100) NOT NULL PRIMARY KEY REFERENCES caretaker
+);
+
+
+-- retrieve user query (FKKK )
+SELECT u.email, 
+CASE 
+    WHEN u.email = p.email THEN 'petowner'
+    WHEN u.email = c.email THEN 'caretaker'
+    WHEN u.email = a.email THEN 'admin'
+    END acctype
+FROM users u FULL OUTER JOIN petOwner p ON u.email = p.email 
+    FULL OUTER JOIN caretaker c ON u.email = c.email
+        FULL OUTER JOIN PCSAdmin a ON u.email = a.email
+WHERE u.email=$1 AND u.password=$2
+AND (u.email=c.email
+    OR u.email=p.email 
+    OR u.email=a.email);
