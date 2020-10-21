@@ -3,12 +3,14 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const session = require('express-session')
 
 /* --- V7: Using dotenv     --- */
 require('dotenv').config();
 
 var logInRouter = require('./routes/logIn');
 var usersRouter = require('./routes/users');
+var homeRouter = require('./routes/home');
 
 var app = express();
 
@@ -21,9 +23,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+//self added
+app.use(session({secret: 'ILoveCS2102'}));
 
 app.use('/', logInRouter);
 app.use('/users', usersRouter);
+app.use('/home', homeRouter);
 
 /* --- V6: Modify Database  --- */
 var bodyParser = require('body-parser');

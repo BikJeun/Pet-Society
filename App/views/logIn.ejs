@@ -18,7 +18,10 @@
   </head>
   
   <body>
-    <h1>Welcome to Pet Society!</h1>
+	<h1>Welcome to Pet Society!</h1>
+	<% if (errMess.err2) { %>
+		<h3 style="color: crimson"><%= errMess.err2 %></h3>
+	<% } %>
 		<form id="html_form" action="logIn" role="form" method="post">
 			<div class="form-group">
 				<label for="email">Email</label>
