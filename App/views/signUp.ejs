@@ -23,6 +23,9 @@
 	<% if (errMess.err) { %>
 		<h3 style="color: crimson"><%= errMess.err %></h3>
 	<% } %>
+	<p>We have 2 types of accounts available!<br>
+	Regular Account: Able to look for care takers for your pet as well as take care of pets based on your stated availabilites<br>
+	Full Time Account: A full time Care Taker (also able to engage in the service of other care takers)</t>
 		<form id="html_form" action="signup" role="form" method="post">
 			<div class="form-group">
 				<label for="email">Email</label>
@@ -50,9 +53,8 @@
 			</div>
 			<div class="form-group">
 				<p>Select the type of Account you would like to create</p>
-				<input type="radio" name="chooseone" value="petowner" checked><label for="petowner">  Pet Owner</label><br>
-				<input type="radio" name="chooseone" value="ftcaretaker"><label for="ftcaretaker">  Full Time Care Taker</label><br>
-				<input type="radio" name="chooseone" value="ptcaretaker"><label for="ptcaretaker">  Part Time Care Taker</label><br>
+				<input type="radio" name="chooseone" value="ptcaretaker" checked><label for="ptcaretaker">  Regular Account</label><br>
+				<input type="radio" name="chooseone" value="ftcaretaker"><label for="ftcaretaker">  Full Time Account</label><br>
 			</div>
 			
 			<button type="submit" class="btn btn-primary">Sign Up</button>

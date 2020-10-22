@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS petOwner cascade;
+DROP TABLE IF EXISTS petowner cascade;
 
-CREATE TABLE petOwner (
+CREATE TABLE petowner (
     email VARCHAR(100) NOT NULL PRIMARY KEY,
     password VARCHAR(100) NOT NULL,
     firstName varchar(200) NOT NULL,
@@ -8,5 +8,5 @@ CREATE TABLE petOwner (
     address VARCHAR(200) NOT NULL,
     verified boolean default false,
     dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
-    accountType VARCHAR(20) default "PetOwner"
+    accountType VARCHAR(20) default 'PetOwner'
 );

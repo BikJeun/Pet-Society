@@ -4,14 +4,11 @@ const sql = {}
 
 sql.query = {
 
-    // User Log In and Registration
-    retrieve_user: "SELECT u.email, CASE WHEN u.email = p.email THEN 'petowner' WHEN u.email = c.email THEN 'caretaker' WHEN u.email = a.email THEN 'admin' END acctype FROM users u FULL OUTER JOIN petOwner p ON u.email = p.email FULL OUTER JOIN caretaker c ON u.email = c.email FULL OUTER JOIN PCSAdmin a ON u.email = a.email WHERE u.email=$1 AND u.password=$2 AND (u.email=c.email OR u.email=p.email OR u.email=a.email)",
-    create_user: 'INSERT INTO users (email, password, firstName, lastName, address) VALUES ($1,$2,$3,$4,$5) RETURNING *',
-    
-    //To be continued
-
+    // User Log In 
+    retrieve_user: 'SELECT c.email, c.firstName, c.lastName, c.address FROM caretaker c INNER JOIN petowner p ON c.email=p.email WHERE c.email=$1 AND c.password=$2',
+   
     //Caretakers
-    create_care_taker: 'INSERT INTO caretaker (email) VALUES ($1) RETURNING *',
+    create_care_taker: 'INSERT INTO caretaker (email, password, firstName, lastName, address) VALUES ($1,$2,$3,$4,$5) RETURNING *',
     retrieve_full_info: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, c.accountType FROM caretakers c',
     create_full_time_care_taker: 'INSERT INTO fulltimer (email) VALUES ($1,) RETURNING *',
     retrieve_fulltimer: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, "fulltimer" AS accountType FROM caretakers c WHERE exists (SELECT f.email FROM fulltimer WHERE f.email = c.email) LIMIT 50',
@@ -19,7 +16,7 @@ sql.query = {
     retrieve_parttimer: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, "parttimer" AS accountType FROM caretakers c WHERE exists (SELECT f.email FROM fulltimer WHERE f.email = c.email) LIMIT 50',
 
     //PetOwners
-    create_pet_owner: 'INSERT INTO petOwner (email) VALUES ($1) RETURNING *',
+    create_pet_owner: ' INSERT INTO petowner (email, password, firstName, lastName, address) VALUES ($1,$2,$3,$4,$5) RETURNING *;',
     retrieve_petowner: 'SELECT email, firstName, lastName, address, dateOfCreation, password, "petOwner" AS accountType FROM petOwner LIMIT 50',
 
     //Pet

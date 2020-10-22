@@ -8,5 +8,5 @@ CREATE TABLE caretaker (
     address VARCHAR(200) NOT NULL,
     verified boolean default false,
     dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
-    accountType VARCHAR(20) default "Caretaker"
+    accountType VARCHAR(20) default 'Caretaker'
 );
