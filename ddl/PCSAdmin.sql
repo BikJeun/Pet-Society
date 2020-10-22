@@ -1,6 +1,0 @@
-DROP TABLE IF EXISTS PCSAdmin cascade;
-
-CREATE TABLE PCSAdmin (
-    email VARCHAR(100) NOT NULL PRIMARY KEY,
-    FOREIGN KEY (email) REFERENCES user
-);
