@@ -5,8 +5,7 @@ CREATE TABLE caretaker (
     password VARCHAR(100) NOT NULL,
     firstName varchar(200) NOT NULL,
     lastName varchar(200) NOT NULL,
-    address VARCHAR(200) NOT NULL,
-    verified boolean default false,
-    dateOfCreation TIMESTAMP default CURRENT_TIMESTAMP NOT NULL,
-    accountType VARCHAR(20) default 'Caretaker'
+    address VARCHAR(200) NOT NULL
 );
+
+-- Trigger to enforce covering constraint?

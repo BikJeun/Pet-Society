@@ -61,6 +61,23 @@ router.post('/signup', function(req, res, next) {
   console.log("\n\nSigning up with:\nEmail: " + email + "\nPassword: " + password + "\n\n");
   errMessage.signUpError = false;
   
+  end = () => {
+    if (errMessage.signUpError == true) {
+      pool.query('ROLLBACK', (err,data) => {
+          console.log("Sign up unsuccessful!\nEmail already exists!\n\n");
+          console.log("Calling ROLLBACK..\n\n");
+          errMessage.err = "Email already exists! Please use another email";
+          res.redirect('/signup');   
+      });
+    } else {
+      pool.query('COMMIT', (err,data) => {   
+        req.session.currentUserEmail = email;
+        console.log('Sign Up Succesful!\nEmail: ' + req.session.currentUserEmail + "\n\n");
+        res.redirect('/home');
+      });
+    }
+  }
+
   pool.query('BEGIN', (err,data) => {
     if (err) {console.log(err);}
     pool.query(sql_query.query.create_pet_owner, [email, password, firstname, lastname, address], (err,data) => {
@@ -73,24 +90,26 @@ router.post('/signup', function(req, res, next) {
           console.log('Adding to care taker table error: ' + err.message + "\n\n");
           errMessage.signUpError = true;
         } 
-        if (errMessage.signUpError == true) {
-          pool.query('ROLLBACK', (err,data) => {
-              console.log("Sign up unsuccessful!\nEmail already exists!\n\n");
-              console.log("Calling ROLLBACK..\n\n");
-              errMessage.err = "Email already exists! Please use another email";
-              res.redirect('/signup');   
-          });
-        } else {
-          pool.query('COMMIT', (err,data) => {   
-            req.session.currentUserEmail = email;
-            console.log('Sign Up Succesful!\nEmail: ' + req.session.currentUserEmail + "\n\n");
-            res.redirect('/home');
-          });
-        }   
+        if (type == "ptcaretaker") {
+          pool.query(sql_query.query.create_part_time_care_taker, [email], (err, data) => {
+            if (err) {
+              console.log('Adding to part time care taker table error: ' + err.message + "\n\n");
+              errMessage.signUpError = true;
+            }
+            end();
+          })
+        } else if (type == "ftcaretaker") {
+          pool.query(sql_query.query.create_full_time_care_taker, [email], (err, data) => {
+            if (err) {
+              console.log('Adding to full time care taker table error: ' + err.message + "\n\n");
+              errMessage.signUpError = true;
+            }
+            end();
+          })
+        }  
       })
     })
   });
-  
 });
 
 module.exports = router;

@@ -10,7 +10,7 @@ sql.query = {
     //Caretakers
     create_care_taker: 'INSERT INTO caretaker (email, password, firstName, lastName, address) VALUES ($1,$2,$3,$4,$5) RETURNING *',
     retrieve_full_info: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, c.accountType FROM caretakers c',
-    create_full_time_care_taker: 'INSERT INTO fulltimer (email) VALUES ($1,) RETURNING *',
+    create_full_time_care_taker: 'INSERT INTO fulltimer (email) VALUES ($1) RETURNING *',
     retrieve_fulltimer: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, "fulltimer" AS accountType FROM caretakers c WHERE exists (SELECT f.email FROM fulltimer WHERE f.email = c.email) LIMIT 50',
     create_part_time_care_taker: 'INSERT INTO parttimer (email) VALUES ($1) RETURNING *',
     retrieve_parttimer: 'SELECT c.email, c.firstName, c.lastName, c.address, c.dateOfCreation, c.password, "parttimer" AS accountType FROM caretakers c WHERE exists (SELECT f.email FROM fulltimer WHERE f.email = c.email) LIMIT 50',
