@@ -20,11 +20,11 @@ sql.query = {
     retrieve_petowner: 'SELECT email, firstName, lastName, address, dateOfCreation, password, "petOwner" AS accountType FROM petOwner LIMIT 50',
 
     //Pet
-    create_pet: 'INSERT INTO pet VALUES($1, $2, $3, $4, $5, $6) RETURNING * ',
+    create_pet: 'INSERT INTO pets VALUES($1, $2, $3, $4) RETURNING * ',
     retrieve_one_pet: 'SELECT * FROM pets p WHERE p.petName = $1 AND p.petOwner = $2',
     retrieve_all_pets: 'SELECT * FROM pets',
-    filter_by_owner: 'SELECT p.petName, p.petType, p.petBreed, p.gender, p.specialRequirements FROM pets p WHERE p.petOwner = $1',
-    filter_by_type: 'SELECT p.petName, p.petType, p.petBreed, p.gender, p.specialRequirements FROM pets p WHERE p.petType = $1',
+    retrieve_pet_filter_by_owner: 'SELECT p.petName, p.petType, p.specialRequirements FROM pets p WHERE p.petOwner = $1',
+    filter_by_type: 'SELECT p.petName, p.petType, p.specialRequirements FROM pets p WHERE p.petType = $1',
     filter_by_type_and_owner: 'SELECT p.petName, p.typeName, p.breedName, o.firstName, o.email FROM pets p INNER JOIN petOwner ON p.petOwner = o.email',
     delete_one: 'DELETE FROM pets p WHERE p.petName = $1 AND p.petOwner = $2',
     update_one: 'UPDATE pets p SET name = $2, typename = $4, breedname = $5, gender = $6 WHERE p.petName = $1 AND p.petOwner = $3', //inputs are oldName,newName, ownerId,typeName,breedName,gender

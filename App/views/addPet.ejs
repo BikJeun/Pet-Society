@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Add a pet</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    <script src="../javascripts/addPetScript.js"></script>
+    
+  </head>
+  <body>
+    <h1>Add a new Pet!</h1>
+    <h2>Add a pet now to get your hands of it!</h2>
+    <% if (errMess.err) { %>
+		<h3 style="color: crimson"><%= errMess.err %></h3>
+	<% } %>
+		<form id="html_form" action="addpet" role="form" method="post">
+			<div class="form-group">
+				<label for="name">Name</label>
+				<input class="form-control" id="name" name="name" placeholder="Enter pet name"> 
+      		</div>
+			<div class="form-group">
+				<label for="type">Pet Type</label>
+                <input class="form-control" id="type" name="type" placeholder="Enter pet type">
+                <small id="petTypeHelp" class="form-text text-muted">Eg: Dog, Cat, Monkey, etc</small>
+            </div>
+            <div class="form-group">
+				<label for="specialrequirements">Special Requirements</label>
+                <input class="form-control" id="specialrequirements" name="specialrequirements" placeholder="Enter special requirements">
+                <small id="srHelp" class="form-text text-muted">Include any special requirements for care takers to take note of!</small>
+            </div>		
+			<button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
+        <form method="get" action="/home">
+			<button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Back</button>
+        </form>
+        
+        <script>
+			(function() {
+				window.addEventListener('load', function() {
+					var forms = [document.getElementById('html_form')];
+					var validation = Array.prototype.filter.call(forms, function(form) {
+						form.addEventListener('submit', check, false);
+					});
+				}, false);
+			})();
+		</script>
+
+  </body>
+</html>
