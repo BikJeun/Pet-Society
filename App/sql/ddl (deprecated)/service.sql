@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS service cascade;
+DROP TABLE IF EXISTS service ;
 
 CREATE TABLE service (
     pickup DATETIME NOT NULL PRIMARY KEY,

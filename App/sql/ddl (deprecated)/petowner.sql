@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS petowner cascade;
+DROP TABLE IF EXISTS petowner;
 
 CREATE TABLE petowner (
     email VARCHAR(100) NOT NULL PRIMARY KEY,
