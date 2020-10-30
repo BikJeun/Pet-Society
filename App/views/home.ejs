@@ -18,8 +18,9 @@
     
   </head>
   <body>
-    <h1>Welcome in <%= currentUser %></h1>
-       <h2 style="text-align: center">Your Pets</h2>
+    <h1>Welcome in <%= currentUser %></h1> 
+    <button style="margin-top: 10px; position: absolute;" type="submit" class="btn btn-primary" >To Care Taker page</button>
+       <h2 style="text-align: center; text-decoration: underline;">Your Pets</h2>
         <table class="table">
           <thead>
             <tr>
@@ -30,6 +31,9 @@
             </tr>
           </thead>
           <tbody> 
+            <% if (pets.length == 0) { %>
+              <tr><td colspan="4" style="text-align: center; color: darkgrey">You have no pets registered</td></tr>
+              <% } else { %>
             <% for(var i=0; i<pets.length; i++) { %>
             <tr>
               <form>
@@ -39,7 +43,7 @@
                 <td><%= pets[i].specialrequirements%></td>
               </form>
             </tr>
-            <% } %>
+            <% }} %>
           </tbody>
         </table>
         <form method="get" action="/home/addPet">

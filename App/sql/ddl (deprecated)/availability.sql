@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS availability CASCADE;
+DROP TABLE IF EXISTS availability;
 
 CREATE TABLE availability (
     staff VARCHAR(100) NOT NULL REFERENCES parttimer ON DELETE CASCADE,
