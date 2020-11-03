@@ -29,16 +29,23 @@
 				<input class="form-control" id="name" name="name" placeholder="Enter pet name"> 
       		</div>
 			<div class="form-group">
-				<label for="type">Pet Type</label>
-                <input class="form-control" id="type" name="type" placeholder="Enter pet type">
-                <small id="petTypeHelp" class="form-text text-muted">Eg: Dog, Cat, Monkey, etc</small>
-            </div>
+				<p>Select Pet Type</p>
+				<input type="radio" name="chooseone" value="Dog" checked><label for="Dog">  Dog</label><br>
+				<input type="radio" name="chooseone" value="Cat"><label for="Cat">  Cat</label><br>
+				<input type="radio" name="chooseone" value="Rabbit"><label for="Rabbit">  Rabbit</label><br>
+				<input type="radio" name="chooseone" value="Guinea Pig"><label for="Guinea Pig">  Guinea Pig</label><br>
+				<input type="radio" name="chooseone" value="Hamster"><label for="Hamster">  Hamster</label><br>
+				<input type="radio" name="chooseone" value="Gerbil"><label for="Gerbil">  Gerbil</label><br>
+				<input type="radio" name="chooseone" value="Mouse"><label for="Mouse">  Mouse</label><br>
+				<input type="radio" name="chooseone" value="Chinchilla"><label for="Chinchilla">  Chinchilla</label><br>
+				<input type="radio" name="chooseone" value="Fish"><label for="Fish">  Fish</label><br>
+			</div>
             <div class="form-group">
 				<label for="specialrequirements">Special Requirements</label>
                 <input class="form-control" id="specialrequirements" name="specialrequirements" placeholder="Enter special requirements">
                 <small id="srHelp" class="form-text text-muted">Include any special requirements for care takers to take note of!</small>
             </div>		
-			<button type="submit" class="btn btn-primary">Sign Up</button>
+			<button type="submit" class="btn btn-primary">Add Pet</button>
         </form>
         <form method="get" action="/home">
 			<button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Back</button>

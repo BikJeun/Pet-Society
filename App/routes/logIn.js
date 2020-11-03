@@ -34,10 +34,11 @@ router.post('/logIn', function(req, res, next) {
  
   console.log("\n\nLogging up with:\nEmail: " + email + "\nPassword: " + password);
 
-	pool.query(sql_query.query.retrieve_user, [email, password], (err, data) => {
-		if (data.rowCount > 0) {
+	pool.query(sql_query.query.retrieve_user_with_type, [email, password], (err, data) => {
+    if (data.rowCount > 0) {
       console.log("\n\nLog In Successful!\nEmail: " + data.rows[0].email + "\n\n");
       req.session.currentUserEmail = data.rows[0].email;
+      req.session.currentUserZone = data.rows[0].userzone;
       res.redirect('/home');
     } else {
       errMessage.err2 = 'Invalid Login Credentials';
@@ -53,10 +54,10 @@ router.post('/signup', function(req, res, next) {
 	// Retrieve Information
 	var email = req.body.email;
   var password = req.body.password;
-  var firstname = req.body.firstname;
-  var lastname = req.body.lastname;
+  var name = req.body.name;
   var address = req.body.address;
   var type = req.body.chooseone;
+  var zone = req.body.choosezone;
  
   console.log("\n\nSigning up with:\nEmail: " + email + "\nPassword: " + password + "\n\n");
   errMessage.signUpError = false;
@@ -72,6 +73,7 @@ router.post('/signup', function(req, res, next) {
     } else {
       pool.query('COMMIT', (err,data) => {   
         req.session.currentUserEmail = email;
+        req.session.currentUserZone = zone;
         console.log('Sign Up Succesful!\nEmail: ' + req.session.currentUserEmail + "\n\n");
         res.redirect('/home');
       });
@@ -80,12 +82,12 @@ router.post('/signup', function(req, res, next) {
 
   pool.query('BEGIN', (err,data) => {
     if (err) {console.log(err);}
-    pool.query(sql_query.query.create_pet_owner, [email, password, firstname, lastname, address], (err,data) => {
+    pool.query(sql_query.query.create_pet_owner, [email, password, name, address, zone], (err,data) => {
       if (err) {
         console.log('Adding to pet owner table error: ' + err.message + "\n\n");
         errMessage.signUpError = true;
-      } 
-      pool.query(sql_query.query.create_care_taker, [email, password, firstname, lastname, address], (err,data) => {
+      }
+      pool.query(sql_query.query.create_care_taker, [email, password, name, address, zone], (err,data) => {
         if (err) {
           console.log('Adding to care taker table error: ' + err.message + "\n\n");
           errMessage.signUpError = true;

@@ -3,11 +3,11 @@ function check() {
 	var email  = document.getElementById('email' ).value;
 	var password    = document.getElementById('password'   ).value;
 	var password2    = document.getElementById('password2'   ).value;
-	var firstname    = document.getElementById('firstname'   ).value;
-	var lastname    = document.getElementById('lastname'   ).value;
+	var name    = document.getElementById('name'   ).value;
+
 	var address    = document.getElementById('address'   ).value;
 	
-	if(!(email && password && password2 && firstname && lastname && address)) {
+	if(!(email && password && password2 && name && address)) {
 		alert("Please enter all fields");
 		event.preventDefault();
 		event.stopPropagation();

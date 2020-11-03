@@ -5,7 +5,7 @@ const sql = {}
 sql.query = {
 
     //Log In 
-    retrieve_user_with_type: "SELECT CASE WHEN p.email IS NULL THEN a.email WHEN a.email IS NULL THEN p.email END email, CASE WHEN p.email IS NULL THEN 'admin' WHEN a.email IS NULL THEN 'user' END accounttype FROM caretaker c NATURAL JOIN petowner p FULL OUTER JOIN PCSAdmin a ON a.email = p.email WHERE (p.email = $1 AND p.password = $2) OR (a.email = $1 AND a.password = $2)",
+    retrieve_user_with_type: "SELECT CASE WHEN p.email IS NULL THEN a.email WHEN a.email IS NULL THEN p.email END email, CASE WHEN p.email IS NULL THEN a.zone WHEN a.email IS NULL THEN p.zone END userzone, CASE WHEN p.email IS NULL THEN 'admin' WHEN a.email IS NULL THEN 'user' END accounttype FROM caretaker c NATURAL JOIN petowner p FULL OUTER JOIN PCSAdmin a ON a.email = p.email WHERE (p.email = $1 AND p.password = $2) OR (a.email = $1 AND a.password = $2)",
     
     //PCSAdmin
     create_pcs_admin: 'INSERT INTO PCSAdmin (email, password, name, address, zone) VALUES ($1,$2,$3,$4,$5) RETURNING *',
@@ -17,7 +17,7 @@ sql.query = {
     create_care_taker: 'INSERT INTO caretaker (email, password, name, address, zone) VALUES ($1,$2,$3,$4,$5) RETURNING *',  
     create_full_time_care_taker: 'INSERT INTO fulltimer (email) VALUES ($1) RETURNING *',
     create_part_time_care_taker: 'INSERT INTO parttimer (email) VALUES ($1) RETURNING *',
-    retrieve_all_care_taker_by_zone: 'SELECT c.email, c.name, c.address, c.zone, c.password FROM caretaker c WHERE c.zone = $1 LIMIT 25',
+    retrieve_all_care_taker_by_zone: 'SELECT c.email, c.name, c.address, c.zone FROM caretaker c WHERE c.zone = $1 LIMIT 25',
     retrieve_all_full_time_care_taker_by_zone: 'SELECT c.email, c.name, c.address, c.zone FROM caretaker c INNER JOIN fulltimer f ON c.email = f.email WHERE c.zone = $1 LIMIT 25',
     retrieve_all_part_time_care_taker_by_zone: 'SELECT c.email, c.name, c.address, c.zone FROM caretaker c INNER JOIN parttimer p ON c.email = p.email WHERE c.zone = $1 LIMIT 25',
     update_care_taker_email: 'UPDATE caretaker c SET c.email = $2 WHERE c.email = $1',
@@ -61,22 +61,17 @@ sql.query = {
     //cancel bid?
 
     //Rating
-    retrieve_avg_rating: 'SELECT ROUND(AVG(s.rating),2) AS average, COUNT(*) AS NUMBER FROM bid_service s GROUP BY s.care_taker_email HAVING s.care_taker_email = $1'
-
-    //FROM THIS POINT ON THE QUERIES ARE NOT TESTED (i'll leave it not as one line so u can check easily)
+    retrieve_avg_rating: 'SELECT ROUND(AVG(s.rating),2) AS average, COUNT(*) AS NUMBER FROM bid_service s GROUP BY s.care_taker_email HAVING s.care_taker_email = $1',
 
     //Price
-     retrive_base_price_for_fulttimer: 'SELECT f.care_taker_email, b.pet_type, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email $1) >= 4 THEN (p.base_daily_price * 1.5) AS price WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email $1) = 3 THEN (p.base_daily_price * 1.25) AS price WHEN(SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email $1)  < 3  THEN p.base_daily_price AS price FROM (bid_service b JOIN caretaker c ON b.care_taker_email = c.email) JOIN pet p ON b.pet_type = p.pet_type WHERE c.email NOT EXIST (SELECT 1 FROM parttimer pt WHERE pt.email = c.email) UNION SELECT f.email, p.pet_type, p.base_daily_price AS price FROM fulltimer f, pet p WHERE f.email NOT EXIST(SELECT 1 FROM bid_service WHERE f.email = care_taker_email)',
+    retrive_base_price_for_fulttimer: 'SELECT p.pet_type, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 3 THEN (p.base_daily_price * 1.25) WHEN(SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1)  < 3 THEN p.base_daily_price END price FROM pet pWHERE p.name = $2 AND p.pet_type = $3',
 
-    //Salary --->for total salary probably can use CTE?
+    // not ready below this
     //(CARETAKER SIDE)
     retrieve_parttimer_salary: 'SELECT b.care_taker_email, SUM(0.75 * price) AS salary FROM bid_service b GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM parttimer p WHERE b.care_taker_email = p.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1' ,
     retrieve_number_of_pet_days_for_fulltimer_monthly: 'SELECT COUNT(*) AS number FROM bid_service GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM fulltimer f WHERE b.care_taker_email = f.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1',
-    //INCOMPLETE --> mindblock on calculating it
-    retrieve_fulltimer_salary: 'SELECT b.care_taker_email, 
-    CASE
-    WHEN (SELECT COUNT(*) AS number FROM bid_service GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM fulltimer f WHERE b.care_taker_email = f.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1 ) <= 60 THEN 3000 AS salary
-    WHEN (SELECT COUNT(*) AS number FROM bid_service GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM fulltimer f WHERE b.care_taker_email = f.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1)  
+   
+   
 
     //tOTAL NUMBER OF PET (PCS ADMIN SIDE)
     retrive_total_number_of_pet_taken_care_in_a_month: 'SELECT COUNT(*) AS number, b.pet_type FROM bid_service b GROUP BY b.pet_type',
