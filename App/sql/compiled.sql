@@ -144,8 +144,9 @@ FOR EACH ROW EXECUTE PROCEDURE not_parttimer();
 CREATE OR REPLACE FUNCTION check_rating_date()
 RETURNS TRIGGER AS
 $$ BEGIN
-	IF OLD.pickup_date + OLD.duration > CURRENT_TIMESTAMP THEN
-		RAISE EXCEPTION 'Ratings are not allowed to be made for services that have not been completed';
+	IF (NEW.rating IS NOT NULL OR NEW.review IS NOT NULL) 
+	  AND (OLD.pickup_date + OLD.duration > CURRENT_TIMESTAMP OR NEW.accepted = false) THEN
+		RAISE EXCEPTION 'Service has to be accepted and completed';
 		RETURN NULL;
 	ELSE
 		RETURN NEW;
@@ -197,6 +198,7 @@ FOR EACH ROW EXECUTE PROCEDURE check_service();
 CREATE OR REPLACE FUNCTION check_leave_possibility()
 RETURNS TRIGGER AS
 $$ DECLARE maxinterval INTEGER;
+   DECLARE maxinterval2 INTEGER;
     BEGIN
 		IF EXISTS (SELECT 1 FROM bid_service b
                     WHERE b.care_taker_email = NEW.fulltimer_email
@@ -219,8 +221,7 @@ $$ DECLARE maxinterval INTEGER;
 						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1 
 						AND l.end_date >= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
 					) THEN
-			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 
-                                        make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 'nil');
+			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 'nil');
 		END IF;
 		
 		IF EXISTS (SELECT 1 
@@ -229,31 +230,48 @@ $$ DECLARE maxinterval INTEGER;
 						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1 
 						AND l.end_date >= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 					) THEN
-			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 
-                                        make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 'nil');
+			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 'nil');
 		END IF;
 		
 		SELECT MAX(p.gap) INTO maxinterval
 		FROM (SELECT MIN(l2.start_date - l1.end_date) as gap, l2.start_date as leave2_start
 				FROM (SELECT * 
 						FROM temp_leaves l 
-						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE('10-05-2020')) 
-							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE('10-05-2020'))
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
 						ORDER BY l.start_date DESC ) AS l1,
 					 (SELECT * 
 						FROM temp_leaves l 
-						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE('10-05-2020')) 
-							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE('10-05-2020'))
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
 						ORDER BY l.start_date DESC ) AS l2
 				WHERE l2.start_date > l1.start_date
 				GROUP BY l2.start_date) AS p;
+				
+		SELECT p.gap INTO maxinterval2
+		FROM (SELECT MIN(l2.start_date - l1.end_date) as gap, l2.start_date as leave2_start
+				FROM (SELECT * 
+						FROM temp_leaves l 
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+						ORDER BY l.start_date DESC ) AS l1,
+					 (SELECT * 
+						FROM temp_leaves l 
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+						ORDER BY l.start_date DESC ) AS l2
+				WHERE l2.start_date > l1.start_date
+				GROUP BY l2.start_date) AS p
+		ORDER BY p.gap DESC
+		OFFSET 1
+		LIMIT 1;		
 		
 		DROP TABLE temp_leaves;
 		
-		IF maxinterval >= 150 THEN 
+		IF maxinterval >= 300 OR (maxinterval >= 150 AND maxinterval2 >= 150) THEN 
 			RETURN NEW;
 		ELSE 
-			RAISE EXCEPTION 'Cannot add leave as it violetes 150 day requirement';
+			RAISE EXCEPTION 'Cannot add leave as it violetes 2*150 day requirement';
 			RETURN NULL;
 		END IF;
 		
