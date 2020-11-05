@@ -77,13 +77,13 @@ CREATE TABLE bid_service (
     pet_name VARCHAR(100) NOT NULL,
     pet_type petTypeEnum NOT NULL,
     pickup_date DATE NOT NULL,
-    duration INTEGER NOT NULL,
-    price DECIMAL NOT NULL,
+    duration INTEGER NOT NULL CHECK (duration > 0),
+    price DECIMAL NOT NULL CHECK (price > 0),
     transport_agreement transportEnum NOT NULL,
-    rating INTEGER,
+    rating INTEGER CHECK (rating IS NULL OR (rating > 0 AND rating <= 5)),
     review VARCHAR(300),
     accepted boolean DEFAULT false,
-    PRIMARY KEY (pet_owner_email, pet_name, pet_type, pickup_date, duration, price),
+    PRIMARY KEY (pet_owner_email, care_taker_email, pet_name, pet_type, pickup_date, duration, price),
     FOREIGN KEY (pet_owner_email, pet_name, pet_type) REFERENCES pet (pet_owner_email, pet_name, pet_type) ON DELETE CASCADE,
     FOREIGN KEY (care_taker_email) REFERENCES caretaker(email) ON DELETE CASCADE
 );
@@ -97,7 +97,7 @@ CREATE TABLE availability (
 CREATE TABLE leaves (
     fulltimer_email VARCHAR(100) NOT NULL REFERENCES fulltimer(email) ON DELETE CASCADE,
     start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
+    end_date DATE NOT NULL CHECK (end_date >= start_date),
     reason VARCHAR(100) NOT NULL,
     PRIMARY KEY (fulltimer_email, start_date, end_date)
 );
@@ -140,126 +140,130 @@ BEFORE INSERT ON fulltimer
 FOR EACH ROW EXECUTE PROCEDURE not_parttimer();
 -----------------------------------------------------------------------------------
 
--- Trigger to make sure ratings are made properly
-CREATE OR REPLACE FUNCTION check_ratings()
+------------- Trigger to make sure ratings are made after service -----------------
+CREATE OR REPLACE FUNCTION check_rating_date()
 RETURNS TRIGGER AS
-$$ DECLARE ctx NUMERIC;
-    BEGIN
-        -- Ensure that ratings are done after service completes
-        IF NOT EXISTS (SELECT 1 FROM bid_service b WHERE b.accepted = true AND DATEADD(day, b.duration, b.pickup_date) < CURRENT_TIMESTAMP) 
-        THEN RAISE EXCEPTION 'Ratings are not allowed to be made for an ongoing service';
-        RETURN NULL;
-        -- Ensure ratings are between 0-5
-        ELSE IF NEW.rating > 5 OR NEW.rating < 0 THEN
-            RAISE EXCEPTION 'Ratings must be within 0-5.';
-            RETURN NULL;
-        ELSE
-            RETURN NEW;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql;
+$$ BEGIN
+	IF OLD.pickup_date + OLD.duration > CURRENT_TIMESTAMP THEN
+		RAISE EXCEPTION 'Ratings are not allowed to be made for services that have not been completed';
+		RETURN NULL;
+	ELSE
+		RETURN NEW;
+	END IF; END; $$ 
+LANGUAGE plpgsql;
 
-CREATE TRIGGER rating_trigger 
-BEFORE INSERT ON ratings
-FOR EACH ROW EXECUTE PROCEDURE check_ratings();
+CREATE TRIGGER verify_rating_trigger 
+BEFORE UPDATE ON bid_service
+FOR EACH ROW EXECUTE PROCEDURE check_rating_date();
 
 -------------------------------------------------------------------------------------
 
---Trigger to make sure caretakers take up services they can take
+-------- Trigger to make sure caretakers do not exceed their pet care limit ---------
+--------------- and fulltime caretakers automatically accept all bids ---------------
 CREATE OR REPLACE FUNCTION check_service()
 RETURNS TRIGGER AS
 $$ DECLARE ctx NUMERIC;
+    DECLARE rtg NUMERIC;
     BEGIN
-        IF(TG_OP = 'INSERT') OR (TG_OP = 'UPDATE') THEN
-            --CHECK NUMBER OF SERVICES BY CARETAKER OVERLAP
-            SELECT COUNT(*) AS count
-            FROM bid_service b
-            WHERE b.care_taker_email <> NEW.care_taker_email
-            AND b.pet_owner_email =  NEW.pet_owner_email
-            AND b.pickup_date <= DATEADD(day, NEW.duration, NEW.pickup_date)
-            AND NEW.pickup_time <= DATEADD(day, b.duration, b.pickup_date);
-            -- CHECK IF SERVICE EXCEED (FULLTIMER)
-            IF EXIST(SELECT 1 FROM fulltimer) AND count > 5 THEN
-                RAISE EXCEPTION 'There is a limit of up to 5 pets at any one time';
-                RETURN NULL;
-            -- CHECK IF SERVICE EXCEED (PARTTIMER)
-            ELSE IF EXIST(SELECT 1 FROM parttimer) AND RATINGS < 4 AND COUNT > 2 THEN
-                RAISE EXCEPTION 'You cannot have moret than 2 pet at your care at any one time';
-                RETURN NULL;
-            ELSE IF NEW.price < 0 OR NEW.price IS NULL THEN
-                RAISE EXCEPTION 'Price cannot be null or negative';
-                RETRUN NULL;
-            ELSE 
-                RETURN NEW;
-            END IF;
-        END IF;
-        ELSE IF (TG_OP = 'DELETE') THEN
-            -- CHECK IF CARETAKER CANCELS SERVICES 1 DAY BEFORE
-            IF EXISTS(SELECT 1 FROM bid_service b
-                        WHERE b.care_taker_email = OLD.care_taker_email
-                        AND b.accepted = true;)
-                        AND OLD.pickup_time - CURRENT_TIMESTAMP < INTERVAL '1 DAY' THEN
-                RAISE EXCEPTION 'You cannot cancel one day before your service time!';
-                RETURN NULL;
-            ELSE
-                RETURN NEW;
-            END IF;
-    END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER bid_service_trigger
-BEFORE INSERT OR UPDATE OR DELETE ON bid_service
-FOR EACH ROW EXECUTE PROCEDURE check_service();
----------------------------------------------------------------
---Trigger to allow for acceptance of job immediately
-
-CREATE OR REPLACE FUNCTION accept_bid()
-RETURNS TRIGGER AS 
-$$ DECLARE ctx NUMERIC;
-    BEGIN 
-        --FULLTIMERS WILL AUTO ACCEPT BID IF POSSIBLE
-        IF EXIST(SELECT 1 FROM fulltimer f WHERE f.email = NEW.care_taker_email)
-            AND SELECT COUNT(*) AS count
-            FROM bid_service b
-            WHERE b.care_taker_email <> NEW.care_taker_email
-            AND b.pet_owner_email =  NEW.pet_owner_email
-            AND b.pickup_date <= DATEADD(day, NEW.duration, NEW.pickup_date)
-            AND NEW.pickup_time <= DATEADD(day, b.duration, b.pickup_date) < 5 THEN
-            RAISE EXCEPTION 'Bid service accepted automatically'
+        SELECT COUNT(*) INTO ctx
+        FROM bid_service b
+        WHERE b.care_taker_email = NEW.care_taker_email
+            AND b.pickup_date <= NEW.pickup_date + NEW.duration
+            AND NEW.pickup_date <= b.pickup_date + b.duration;
+        SELECT ROUND(AVG(s.rating),2) INTO rtg
+        FROM bid_service s 
+        GROUP BY s.care_taker_email 
+        HAVING s.care_taker_email = NEW.care_taker_email;
+        IF ctx >= 5 THEN
+            RAISE EXCEPTION 'You cannot have more than 5 pet at your care at any one time';
+            RETURN NULL;
+        ELSEIF EXISTS (SELECT 1 FROM parttimer p WHERE p.email = NEW.care_taker_email) AND rtg < 4 AND ctx >= 2 THEN 
+            RAISE EXCEPTION 'You cannot have more than 2 pet at your care at any one time';
+            RETURN NULL;
+        ELSEIF EXISTS (SELECT 1 FROM fulltimer f WHERE f.email = NEW.care_taker_email) THEN
             NEW.accepted = true;
             RETURN NEW;
-        END IF;
-    END;
-$$ LANGUAGE plpgsql;
+        ELSE 
+            RETURN NEW;	
+        END IF; END; $$
+LANGUAGE plpgsql;
 
-CREATE TRIGGER auto_accept
-BEFORE INSERT OR UPDATE ON bid_service
-FOR EACH ROW EXECUTE PROCEDURE accept_bid();
+CREATE TRIGGER bid_service_trigger
+BEFORE INSERT ON bid_service
+FOR EACH ROW EXECUTE PROCEDURE check_service();
+---------------------------------------------------------------------------------------
 
-
-
----------------------------------------------------------------
---Trigger to check if leave is possible
-CREATE OR REPLACE FUNCTION check_leave()
+-------------------- Trigger to check if leave is possible ----------------------------
+CREATE OR REPLACE FUNCTION check_leave_possibility()
 RETURNS TRIGGER AS
-$$ DECLARE ctx NUMERIC;
+$$ DECLARE maxinterval INTEGER;
     BEGIN
-        --applying for leave during service period
-        IF EXIST(SELECT 1 FROM bid_service B
-                    WHERE b.care_giver_email = NEW.care_giver_email
-                    AND (NEW.start_date <= b.pickup_date)
-                        OR (NEW.start_date <= DATEADD(day, b.duration, b.pickup_date))
-                        OR NEW.end_date >= b.pickup_date)) THEN
-            RAISE EXCEPTION 'You have a job offer!';
+		IF EXISTS (SELECT 1 FROM bid_service b
+                    WHERE b.care_taker_email = NEW.fulltimer_email
+                    AND (NEW.start_date <= b.pickup_date + b.duration) 
+					AND (b.pickup_date <= NEW.end_date)) THEN
+            RAISE EXCEPTION 'You have a job offer during that period';
             RETURN NULL;
-        END IF;
+		END IF;
+		
+		CREATE TEMP TABLE temp_leaves AS 
+		SELECT *
+		FROM leaves l
+		WHERE l.fulltimer_email = NEW.fulltimer_email;
+		
+		INSERT INTO temp_leaves SELECT NEW.fulltimer_email, NEW.start_date, NEW.end_date, NEW.reason;
+		
+		IF EXISTS (SELECT 1 
+					FROM leaves l 
+					WHERE l.fulltimer_email = NEW.fulltimer_email 
+						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1 
+						AND l.end_date >= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
+					) THEN
+			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 
+                                        make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 'nil');
+		END IF;
+		
+		IF EXISTS (SELECT 1 
+					FROM leaves l 
+					WHERE l.fulltimer_email = NEW.fulltimer_email 
+						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1 
+						AND l.end_date >= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
+					) THEN
+			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 
+                                        make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 'nil');
+		END IF;
+		
+		SELECT MAX(p.gap) INTO maxinterval
+		FROM (SELECT MIN(l2.start_date - l1.end_date) as gap, l2.start_date as leave2_start
+				FROM (SELECT * 
+						FROM temp_leaves l 
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE('10-05-2020')) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE('10-05-2020'))
+						ORDER BY l.start_date DESC ) AS l1,
+					 (SELECT * 
+						FROM temp_leaves l 
+						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE('10-05-2020')) 
+							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE('10-05-2020'))
+						ORDER BY l.start_date DESC ) AS l2
+				WHERE l2.start_date > l1.start_date
+				GROUP BY l2.start_date) AS p;
+		
+		DROP TABLE temp_leaves;
+		
+		IF maxinterval >= 150 THEN 
+			RETURN NEW;
+		ELSE 
+			RAISE EXCEPTION 'Cannot add leave as it violetes 150 day requirement';
+			RETURN NULL;
+		END IF;
+		
     END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER leave_trigger
-BEFORE INSERT ON leave
-FOR EACH ROW EXECUTE PROCEDURE check_leave();
-
+BEFORE INSERT ON leaves
+FOR EACH ROW EXECUTE PROCEDURE check_leave_possibility();	
+---------------------------------------------------------------------------------------
 
             
             

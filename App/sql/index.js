@@ -46,7 +46,7 @@ sql.query = {
     //Bids
     create_bid: 'INSERT INTO bid_service (pet_owner_email, pet_name, pet_type, pickup_date, duration, price) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
     accept_bid: 'UPDATE bid_service SET accepted = true WHERE pet_owner_email = $1 AND pet_name = $2 AND pet_type = $3 AND pickup_date = $4 AND duration = $5 AND price = $6',
-    retrieve_bid_filter_by_date_and_price: 'SELECT * FROM bid_service WHERE pickup_date = $1 ORDER BY price ASC ', //SHOULD THIS BE JUST RETREIVE BY DATE?
+    retrieve_bid_filter_by_date_and_price: 'SELECT * FROM bid_service WHERE pickup_date = $1 ORDER BY price ASC ', //this only looks for the sepcific date
     retrieve_bid_filter_by_accepted_status: 'SELECT * FROM bid_service WHERE accepted = "true"',
     retrieve_bid_filter_by_pending_status: 'SELECT * FROM bid_service WHERE accepted = "false"',
     retrieve_bid_filter_by_owner: 'SELECT * FROM bid_service WHERE pet_owner_email = $1 ORDER BY care_taker_email',
@@ -64,20 +64,20 @@ sql.query = {
     retrieve_avg_rating: 'SELECT ROUND(AVG(s.rating),2) AS average, COUNT(*) AS NUMBER FROM bid_service s GROUP BY s.care_taker_email HAVING s.care_taker_email = $1',
 
     //Price
-    retrive_base_price_for_fulttimer: 'SELECT p.pet_type, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 3 THEN (p.base_daily_price * 1.25) WHEN(SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1)  < 3 THEN p.base_daily_price END price FROM pet pWHERE p.name = $2 AND p.pet_type = $3',
+    retrive_base_price_for_fulltimer: 'SELECT p.pet_type, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 3 THEN (p.base_daily_price * 1.25) WHEN(SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1)  < 3 THEN p.base_daily_price END price FROM pet pWHERE p.name = $2 AND p.pet_type = $3',
 
-    // not ready below this
-    //(CARETAKER SIDE)
-    retrieve_parttimer_salary: 'SELECT b.care_taker_email, SUM(0.75 * price) AS salary FROM bid_service b GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM parttimer p WHERE b.care_taker_email = p.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1' ,
-    retrieve_number_of_pet_days_for_fulltimer_monthly: 'SELECT COUNT(*) AS number FROM bid_service GROUP BY b.care_taker_email HAVING b.care_taker_email EXIST(SELECT 1 FROM fulltimer f WHERE b.care_taker_email = f.email) WHERE b.accepted = "true" AND EXTRACT(MONTH FROM b.pickup_date) = $1',
+  
+    //CareTakerQueries
+    retrieve_all_parttimer_salary_by_month: 'SELECT b.care_taker_email, SUM(b.price) * 0.75 AS salary FROM bid_service b WHERE b.accepted = true AND EXTRACT(MONTH FROM b.pickup_date)::INTEGER = $1 GROUP BY b.care_taker_email HAVING EXISTS (SELECT 1 FROM parttimer p WHERE b.care_taker_email = p.email)',
+    retrieve_number_of_pet_days_for_fulltimer_monthly: 'SELECT COUNT(*) AS total_days, b.care_taker_email AS care_taker_email FROM bid_service b WHERE b.accepted = true AND EXTRACT(MONTH FROM b.pickup_date)::INTEGER = $1 GROUP BY b.care_taker_email HAVING EXISTS (SELECT 1 FROM fulltimer f WHERE b.care_taker_email = f.email)',
    
    
 
     //tOTAL NUMBER OF PET (PCS ADMIN SIDE)
-    retrive_total_number_of_pet_taken_care_in_a_month: 'SELECT COUNT(*) AS number, b.pet_type FROM bid_service b GROUP BY b.pet_type',
+    retrive_total_number_of_pet_taken_care_in_a_month_by_type: 'SELECT b.pet_type, COUNT(b.pet_type) FROM bid_service b WHERE b.accepted = true GROUP BY b.pet_type',
     
-    //highest number of jobs
-    retrieve_month_with_highest_number_of_jobs: 'SELECT month FROM (SELECT EXTRACT(MONTH FROM pickup_date) AS month, COUNT(*) AS number FROM bid_service GROUP BY EXTRACT(MONTH FROM pickup_date)) WHERE number = MAX(number)',
+    //Month highest number of jobs
+    retrieve_month_with_highest_number_of_jobs: "SELECT p.no_of_jobs AS no_of_jobs, to_char(to_timestamp (p.month::text, 'MM'), 'Month') AS month FROM ( SELECT COUNT(*) AS no_of_jobs, EXTRACT(MONTH FROM b.pickup_date) AS month FROM bid_service b WHERE b.accepted = true GROUP BY EXTRACT(MONTH FROM b.pickup_date)) AS p WHERE p.no_of_jobs >= ALL(SELECT COUNT(*) AS no_of_jobs FROM bid_service b WHERE b.accepted = true GROUP BY EXTRACT(MONTH FROM b.pickup_date))",
 
     //(PET OWNER SIDE)
     retrieve_all_care_taker_in_their_area: 'SELECT c.name, c.email FROM caretaker c WHERE c.zone = $1',
