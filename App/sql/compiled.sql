@@ -208,14 +208,22 @@ $$ DECLARE maxinterval INTEGER;
             RETURN NULL;
 		END IF;
 		
+		IF EXISTS (SELECT 1 FROM leaves l
+                    WHERE l.fulltimer_email = NEW.fulltimer_email
+                    AND (NEW.start_date <= l.end_date) 
+					AND (l.start_date <= NEW.end_date)) THEN
+            RAISE EXCEPTION 'Overlapping leave request';
+            RETURN NULL;
+		END IF;
+		
 		CREATE TEMP TABLE temp_leaves AS 
 		SELECT *
 		FROM leaves l
 		WHERE l.fulltimer_email = NEW.fulltimer_email;
 		
-		INSERT INTO temp_leaves SELECT NEW.fulltimer_email, NEW.start_date, NEW.end_date, NEW.reason;
+		INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, NEW.start_date, NEW.end_date, NEW.reason);
 		
-		IF EXISTS (SELECT 1 
+		IF NOT EXISTS (SELECT 1 
 					FROM leaves l 
 					WHERE l.fulltimer_email = NEW.fulltimer_email 
 						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1 
@@ -224,14 +232,14 @@ $$ DECLARE maxinterval INTEGER;
 			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1, 'nil');
 		END IF;
 		
-		IF EXISTS (SELECT 1 
+		IF NOT EXISTS (SELECT 1 
 					FROM leaves l 
 					WHERE l.fulltimer_email = NEW.fulltimer_email 
 						AND l.start_date <= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1 
 						AND l.end_date >= make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 					) THEN
 			INSERT INTO temp_leaves VALUES (NEW.fulltimer_email, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1, 'nil');
-		END IF;
+		END IF;		
 		
 		SELECT MAX(p.gap) INTO maxinterval
 		FROM (SELECT MIN(l2.start_date - l1.end_date) as gap, l2.start_date as leave2_start
@@ -239,11 +247,15 @@ $$ DECLARE maxinterval INTEGER;
 						FROM temp_leaves l 
 						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
 							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+							OR l.end_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
+							OR l.start_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 						ORDER BY l.start_date DESC ) AS l1,
 					 (SELECT * 
 						FROM temp_leaves l 
 						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
 							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+							OR l.end_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
+							OR l.start_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 						ORDER BY l.start_date DESC ) AS l2
 				WHERE l2.start_date > l1.start_date
 				GROUP BY l2.start_date) AS p;
@@ -254,11 +266,15 @@ $$ DECLARE maxinterval INTEGER;
 						FROM temp_leaves l 
 						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
 							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+							OR l.end_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
+							OR l.start_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 						ORDER BY l.start_date DESC ) AS l1,
 					 (SELECT * 
 						FROM temp_leaves l 
 						WHERE EXTRACT(YEAR FROM l.start_date) = EXTRACT(YEAR FROM DATE(NEW.start_date)) 
 							OR EXTRACT(YEAR FROM l.end_date) = EXTRACT(YEAR FROM DATE(NEW.start_date))
+							OR l.end_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 1, 1) - 1
+							OR l.start_date = make_date(EXTRACT(YEAR FROM DATE(NEW.start_date))::INTEGER, 12, 31) + 1
 						ORDER BY l.start_date DESC ) AS l2
 				WHERE l2.start_date > l1.start_date
 				GROUP BY l2.start_date) AS p
@@ -280,7 +296,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER leave_trigger
 BEFORE INSERT ON leaves
-FOR EACH ROW EXECUTE PROCEDURE check_leave_possibility();	
+FOR EACH ROW EXECUTE PROCEDURE check_leave_possibility();		
 ---------------------------------------------------------------------------------------
 
             
