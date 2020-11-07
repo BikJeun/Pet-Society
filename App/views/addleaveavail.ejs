@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Home</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    
+  </head>
+  <body> 
+    <form method="get" action="/caretakerhome">
+      <button style="position: absolute; right: 2%; " type="submit" class="btn btn-primary" >Back</button>
+    </form>
+
+    <h1>Welcome in <%= currentUserName %></h1> 
+    <h2>Your Care Taker Account Type: <%= currentUserType %></h2>
+    
+    
+    <% if (currentUserType == "Part Timer") { %>
+    <h2>Add an availability</h2>
+    <form id="html_form" action="addleaveavail" role="form" method="post">
+      <label style="margin-top: 30px" for="start">Date:</label>
+      <input type="date" id="date1" name="date1">
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    
+    <% } %>
+    
+    <% if (currentUserType == "Full Timer") { %>
+    <h2>Add a leave</h2>
+    <form id="html_form" action="addleaveavail" role="form" method="post">
+      <label style="margin-top: 30px" for="start">Start Date:</label>
+      <input type="date" id="date1" name="date1">
+      <label style="margin-top: 30px; margin-left: 10px;" for="start">End Date:</label>
+      <input type="date" id="date2" name="date2">
+      <div class="form-group">
+				<label for="reason">Reason</label>
+				<input class="form-control" id="reason" name="reason" placeholder="Enter reason">
+			</div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    
+    <% } %>
+
+
+		
+  </body>
+</html>

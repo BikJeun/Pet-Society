@@ -39,6 +39,8 @@ router.post('/logIn', function(req, res, next) {
       console.log("\n\nLog In Successful!\nEmail: " + data.rows[0].email + "\n\n");
       req.session.currentUserEmail = data.rows[0].email;
       req.session.currentUserZone = data.rows[0].userzone;
+      req.session.currentUserName = data.rows[0].name;
+      req.session.currentUserType = data.rows[0].accounttype;
       res.redirect('/home');
     } else {
       errMessage.err2 = 'Invalid Login Credentials';
@@ -74,6 +76,9 @@ router.post('/signup', function(req, res, next) {
       pool.query('COMMIT', (err,data) => {   
         req.session.currentUserEmail = email;
         req.session.currentUserZone = zone;
+        req.session.currentUserName = name;
+        if (type == "ptcaretaker") {req.session.currentUserType = 'Part Timer'}
+        else {req.session.currentUserType = 'Full Timer'}
         console.log('Sign Up Succesful!\nEmail: ' + req.session.currentUserEmail + "\n\n");
         res.redirect('/home');
       });

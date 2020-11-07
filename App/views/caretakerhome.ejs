@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Home</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    
+  </head>
+  <body> 
+    <form method="get" action="/home">
+      <button style="position: absolute; right: 2%; " type="submit" class="btn btn-primary" >To Pet Owner page</button>
+    </form>
+
+    <h1>Welcome in <%= currentUserName %></h1> 
+    <h2>Your Care Taker Account Type: <%= currentUserType %></h2>
+    <h2 style="color:mediumturquoise">Total number of pet days this month: <%=petdays %></h2>
+       
+    <% if (currentUserType == "Part Timer") { %>
+    <h2 style="text-align: center; text-decoration: underline;">Your Pending Bids</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">No</th>
+          <th scope="col">Pet Name</th>
+          <th scope="col">Pet Type</th>
+          <th scope="col">Pickup Date</th>
+          <th scope="col">Duration (Days)</th>
+          <th scope="col">Price</th>
+          <th scope="col">Transport Type</th>
+        </tr>
+      </thead>
+      <tbody> 
+        <% if (pendingBids.length == 0) { %>
+          <tr><td colspan="7" style="text-align: center; color: darkgrey">You have no pending bids</td></tr>
+          <% } else { %>
+        <% for(var i=0; i<pendingBids.length; i++) { %>
+        <tr>
+          <form>
+            <td><%= i+1%></td>
+            <td><%= pendingBids[i].pet_name%></td>
+            <td><%= pendingBids[i].pet_type%></td>
+            <td><%= pendingBids[i].pickup_date.toDateString()%></td>
+            <td><%= pendingBids[i].duration%></td>
+            <td><%= pendingBids[i].price%></td>
+            <td><%= pendingBids[i].transport_agreement%></td>
+          </form>
+        </tr>
+        <% }} %>
+      </tbody>
+      </table>
+      <form method="get" action="/caretakerhome/acceptbid">
+        <button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Accept a bid</button>
+      </form>
+
+      <% } %>
+
+
+      <h2 style="text-align: center; text-decoration: underline; margin-top: 20px;">Your Upcoming Services</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">No</th>
+          <th scope="col">Pet Name</th>
+          <th scope="col">Pet Type</th>
+          <th scope="col">Pickup Date</th>
+          <th scope="col">Duration (Days)</th>
+          <th scope="col">Price</th>
+          <th scope="col">Transport Type</th>
+        </tr>
+      </thead>
+      <tbody> 
+        <% if (upcomingServices.length == 0) { %>
+          <tr><td colspan="7" style="text-align: center; color: darkgrey">You have no upcoming services</td></tr>
+          <% } else { %>
+        <% for(var i=0; i<upcomingServices.length; i++) { %>
+        <tr>
+          <form>
+            <td><%= i+1%></td>
+            <td><%= upcomingServices[i].pet_name%></td>
+            <td><%= upcomingServices[i].pet_type%></td>
+            <td><%= upcomingServices[i].pickup_date.toDateString()%></td>
+            <td><%= upcomingServices[i].duration%></td>
+            <td><%= upcomingServices[i].price%></td>
+            <td><%= upcomingServices[i].transport_agreement%></td>
+          </form>
+        </tr>
+        <% }} %>
+      </tbody>
+    </table>
+
+    <% if (currentUserType == "Part Timer") { %>
+      <h2 style="text-align: center; text-decoration: underline;">Your Availabilities</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Date</th>
+
+          </tr>
+        </thead>
+        <tbody> 
+          <% if (avail.length == 0) { %>
+            <tr><td colspan="2" style="text-align: center; color: darkgrey">You have no availabilities declared</td></tr>
+            <% } else { %>
+          <% for(var i=0; i<avail.length; i++) { %>
+          <tr>
+            <form>
+              <td><%= i+1%></td>
+              <td><%= avail[i].date.toDateString()%></td>
+            </form>
+          </tr>
+          <% }} %>
+        </tbody>
+        </table>
+        <form method="get" action="/caretakerhome/addleaveavail">
+          <button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Add an Availabilty</button>
+        </form>
+  
+        <% } %>
+
+
+        <% if (currentUserType == "Full Timer") { %>
+          <h2 style="text-align: center; text-decoration: underline;">Your Leaves</h2>
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">No</th>
+                <th scope="col">Start Date</th>
+                <th scope="col">End Date</th>
+                <th scope="col">Reason</th>
+              </tr>
+            </thead>
+            <tbody> 
+              <% if (leaves.length == 0) { %>
+                <tr><td colspan="4" style="text-align: center; color: darkgrey">You have no leaves declared</td></tr>
+                <% } else { %>
+              <% for(var i=0; i<leaves.length; i++) { %>
+              <tr>
+                <form>
+                  <td><%= i+1%></td>
+                  <td><%= leaves[i].start_date.toDateString()%></td>
+                  <td><%= leaves[i].end_date.toDateString()%></td>
+                  <td><%= leaves[i].reason%></td>
+                </form>
+              </tr>
+              <% }} %>
+            </tbody>
+            </table>
+            <form method="get" action="/caretakerhome/addleaveavail">
+              <button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Add a leave</button>
+            </form>
+      
+            <% } %>
+
+            <form method="get" action="/caretakerhome/addleaveavail">
+              <button style="margin-top: 20px;" type="submit" class="btn btn-primary" >View all your reviews</button>
+            </form>
+		
+  </body>
+</html>

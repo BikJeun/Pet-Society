@@ -11,6 +11,7 @@ require('dotenv').config();
 var logInRouter = require('./routes/logIn');
 var usersRouter = require('./routes/users');
 var homeRouter = require('./routes/home');
+var caretakerhomeRouter = require('./routes/caretakerhome');
 
 var app = express();
 
@@ -29,6 +30,7 @@ app.use(session({secret: 'ILoveCS2102'}));
 app.use('/', logInRouter);
 app.use('/users', usersRouter);
 app.use('/home', homeRouter);
+app.use('/caretakerhome', caretakerhomeRouter);
 
 /* --- V6: Modify Database  --- */
 var bodyParser = require('body-parser');

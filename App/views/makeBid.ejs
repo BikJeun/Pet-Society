@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Update Pet</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    <script src="../javascripts/addPetScript.js"></script>
+    
+  </head>
+  <body> 
+    <h1>Bid for a service</h1> 
+       <h2 style="text-align: center; text-decoration: underline;">Your Pets</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">No</th>
+              <th scope="col">Pet Name</th>
+              <th scope="col">Pet Type</th>
+              <th scope="col">Special Requirements</th>
+            </tr>
+          </thead>
+          <tbody> 
+            <% if (pets.length == 0) { %>
+              <tr><td colspan="4" style="text-align: center; color: darkgrey">You have no pets registered</td></tr>
+              <% } else { %>
+            <% for(var i=0; i<pets.length; i++) { %>
+            <tr>
+              <form>
+                <td><%= i+1%></td>
+                <td><%= pets[i].pet_name%></td>
+                <td><%= pets[i].pet_type%></td>
+                <td><%= pets[i].special_requirements%></td>
+              </form>
+            </tr>
+            <% }} %>
+          </tbody>
+        </table>
+       
+        <form id="html_form" action="makeBid" role="form" method="post">
+			<div class="form-group">
+				<label for="name">Pet No</label>
+				<input class="form-control" id="no" name="no" placeholder="Enter pet number to bid (as displayed above)"> 
+          </div>
+          <label style="margin-top: 10px; margin-bottom: 20px;" for="start">Pick Up Date:</label>
+        <input type="date" id="date" name="date">
+        <t><br></t>
+        <label for="name">Duration</label>
+        <input class="form-control" id="duration" name="duration" placeholder="Enter duration (days)">
+            <div class="form-group">
+				<p>Select the type of caretaker you would like</p>
+				<input type="radio" name="chooseone" value="fulltime" checked><label for="fulltime">  Full Time</label><br>				
+				<input type="radio" name="chooseone" value="parttime"><label for="parttime">  Part Time</label><br>
+			</div>	
+			<button type="submit" class="btn btn-primary">Proceed</button>
+        </form>
+
+        <form method="get" action="/home">
+			<button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Back</button>
+        </form>
+
+
+
+		
+  </body>
+</html>

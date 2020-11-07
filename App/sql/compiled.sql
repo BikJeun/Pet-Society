@@ -27,7 +27,6 @@ CREATE TABLE petowner (
     zone zoneEnum NOT NULL
 );
 
--- Trigger to enforce covering constraint?
 CREATE TABLE caretaker (
     email VARCHAR(100) NOT NULL PRIMARY KEY,
     password VARCHAR(100) NOT NULL,
@@ -169,6 +168,7 @@ $$ DECLARE ctx NUMERIC;
         SELECT COUNT(*) INTO ctx
         FROM bid_service b
         WHERE b.care_taker_email = NEW.care_taker_email
+            AND b.accepted = true
             AND b.pickup_date <= NEW.pickup_date + NEW.duration
             AND NEW.pickup_date <= b.pickup_date + b.duration;
         SELECT ROUND(AVG(s.rating),2) INTO rtg
@@ -190,7 +190,7 @@ $$ DECLARE ctx NUMERIC;
 LANGUAGE plpgsql;
 
 CREATE TRIGGER bid_service_trigger
-BEFORE INSERT ON bid_service
+BEFORE INSERT OR UPDATE ON bid_service
 FOR EACH ROW EXECUTE PROCEDURE check_service();
 ---------------------------------------------------------------------------------------
 
