@@ -3,7 +3,8 @@ var router = express.Router();
 
 const sql_query = require('../sql');
 
-const { Pool } = require('pg')
+const { Pool } = require('pg');
+const { promiseImpl } = require('ejs');
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL
 });
@@ -23,14 +24,28 @@ router.get('/', function(req, res, next) {
       console.log(fulltimers.length);
       pool.query(sql_query.query.retrieve_all_part_time_care_taker_by_zone, [req.session.currentUserZone, req.session.currentUserEmail], (err, data) => {
         parttimers = data.rows;
-        res.render('home', { 
-          title: 'Home Page', 
-          currentUserEmail:  req.session.currentUserEmail,
-          currentUserName: req.session.currentUserName,
-          pets: pets,
-          fulltimers: fulltimers,
-          parttimers: parttimers
-        });
+        pool.query(sql_query.query.retrieve_upcoming_bids, [req.session.currentUserEmail], (err, data) => {
+          upcomingBids = data.rows;
+          pool.query(sql_query.query.retrieve_pending_bids, [req.session.currentUserEmail], (err, data) => {
+            pendingBids = data.rows;
+            console.log(err);
+            pool.query(sql_query.query.retrieve_complete_bids, [req.session.currentUserEmail], (err, data) => {
+              console.log(err);
+              completedBids = data.rows;               
+              res.render('home', { 
+                title: 'Home Page', 
+                currentUserEmail:  req.session.currentUserEmail,
+                currentUserName: req.session.currentUserName,
+                pets: pets,
+                fulltimers: fulltimers,
+                parttimers: parttimers,
+                upcomingBids: upcomingBids,
+                pendingBids: pendingBids,
+                completedBids: completedBids
+              });
+            })
+          })
+        })        
       });
     });    
   }); 
@@ -107,16 +122,16 @@ router.post('/makeBid/selectcaretaker', function(req, res, next) {
   var agree = req.body.chooseone;
 
     if (bidData.choice == 1) { //fulltimer
-    pool.query(sql_query.query.retrieve_base_price_for_fulltimer_by_pet, [pet.pet_name, pet.pet_type], (err, data) => {
+    pool.query(sql_query.query.retrieve_base_price_for_fulltimer_by_pet_no_leave, [bidData.pet.pet_name, bidData.pet.pet_type, bidData.date, bidData.duration, req.session.currentUserEmail], (err, data) => {
       caretaker = data.rows[no-1];
-      pool.query(sql_query.query.create_bid, [req.session.currentUserEmail, caretaker.email, bidData.pet.pet_name, bidData.pet.pet_type, bidData.date, bidData.duration, caretaker.price * duration, agree], (err, data) => {
+      pool.query(sql_query.query.create_bid, [req.session.currentUserEmail, caretaker.email, bidData.pet.pet_name, bidData.pet.pet_type, bidData.date, bidData.duration, caretaker.price * bidData.duration, agree], (err, data) => {
         console.log("error: " + err);
         res.redirect('/home');
       })
       
     })
   } else {
-    pool.query(sql_query.query.retrieve_all_part_time_care_taker_by_zone, [req.session.currentUserZone, req.session.currentUserEmail], (err, data) => {
+    pool.query(sql_query.query.retrieve_available_parttimer, [bidData.date, bidData.duration, req.session.currentUserEmail], (err, data) => {
       caretaker = data.rows[no-1];
       pool.query(sql_query.query.create_bid, [req.session.currentUserEmail, caretaker.email, bidData.pet.pet_name, bidData.pet.pet_type, bidData.date, bidData.duration, price, agree], (err, data) => {
         console.log("error: " + err);
@@ -137,7 +152,7 @@ router.post("/makeBid", function(req, res, next) {
   pool.query(sql_query.query.retrieve_pet_filter_by_owner, [req.session.currentUserEmail], (err, data) => {
     pet = data.rows[no - 1];
     bidData.pet = pet;
-    console.log(pet.pet_name);
+    console.log(date);
     if (type == 'fulltime') {
       pool.query(sql_query.query.retrieve_base_price_for_fulltimer_by_pet_no_leave, [pet.pet_name, pet.pet_type, date, duration, req.session.currentUserEmail], (err, data) => {
         console.log(err);
@@ -161,5 +176,47 @@ router.post("/makeBid", function(req, res, next) {
   });
 });
 
+var searchData = {
+  result: null
+}
+
+router.post("/searchct", function(req, res, next) {
+  var name = req.body.name;
+
+  pool.query(sql_query.query.search_for_care_taker, ['%'+ name + '%'], (err,data) => {
+    if (err) {console.log(err)}
+    searchData.result = data.rows;
+    res.redirect('/home/searchct')
+  })
+});
+
+router.get('/searchct', function(req, res, next) {  
+  res.render('searchct', {title: 'Search for Caretaker', 
+                          currentUserEmail:  req.session.currentUserEmail, 
+                          caretaker: bidData.caretaker, 
+                          result: searchData.result
+                        });
+});
+
+router.get('/rateservice', function(req, res, next) {
+  pool.query(sql_query.query.retrieve_complete_unrated_bids, [req.session.currentUserEmail], (err, data) => {
+    res.render('rateservice', {title: 'Rate a service', currentUser:  req.session.currentUserEmail, bids: data.rows});
+  });
+});
+
+router.post('/rateservice', function(req, res, next) {
+  var no = req.body.no;
+  var rating = parseInt(req.body.chooseone, 10)
+  var review = req.body.review;
+
+  pool.query(sql_query.query.retrieve_complete_unrated_bids, [req.session.currentUserEmail], (err, data) => {
+    bid = data.rows[no-1];
+    //console.log("eer: " + err);
+    pool.query(sql_query.query.rate_bid, [req.session.currentUserEmail, bid.care_taker_email, bid.pet_name, bid.pet_type, bid.pickup_date, bid.duration, bid.price, rating, review],  (err, data) => {
+      console.log('eRRpr:' + bid.pet_owner_email + " " + req.session.currentUserEmail + " " + bid.care_taker_email);
+      res.redirect('/home')
+    });
+  });
+});
 
 module.exports = router;

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Home</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    
+  </head>
+  <body> 
+    <form method="get" action="/home">
+      <button style="position: absolute; right: 2%; " type="submit" class="btn btn-primary" >Back</button>
+    </form>
+
+    <h1>Search for Caretaker</h1>    
+    
+    <h2 style="text-align: center; text-decoration: underline;">Results</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">No</th>
+          <th scope="col">Name</th>
+          <th scope="col">Address</th>
+          <th scope="col">Zone</th>
+          <th scope="col">Type</th>
+          <th scope="col">Average Rating</th>
+        </tr>
+      </thead>
+      <tbody> 
+        <% if (result.length == 0) { %>
+          <tr><td colspan="7" style="text-align: center; color: darkgrey">You have no reviews</td></tr>
+          <% } else { %>
+        <% for(var i=0; i<result.length; i++) { %>
+        <tr>
+          <form>
+            <td><%= i+1%></td>
+            <td><%= result[i].name%></td>
+            <td><%= result[i].address%></td>
+            <td><%= result[i].zone%></td>
+            <td><%= result[i].type%></td>
+            <% if (fulltimers[i].averagerating) { %>
+                <td><%= fulltimers[i].averagerating%></td>
+              <% } else { %>
+                <td style="color: darkgrey;">No ratings yet</td>
+              <% } %>
+          </form>
+        </tr>
+        <% }} %>
+      </tbody>
+      </table>
+
+
+
+
+		
+  </body>
+</html>

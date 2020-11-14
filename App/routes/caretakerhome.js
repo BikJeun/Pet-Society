@@ -111,5 +111,21 @@ router.post('/addleaveavail', function(req, res, next) {
 
 })
 
+router.get('/viewreviews', function(req, res, next) {
+    pool.query(sql_query.query.retrieve_all_completed_reviews, [req.session.currentUserEmail], (err, data) => {
+        if (err) {console.log(err)}
+        reviews = data.rows;
+        //console.log(data.rows[0].review);
+        res.render('viewreviews', {
+                title: 'View Reviews',
+                currentUserEmail:  req.session.currentUserEmail,
+                currentUserName: req.session.currentUserName,
+                currentUserType: req.session.currentUserType,
+                reviews: reviews
+        })
+    })
+    
+})
+
 
 module.exports = router;

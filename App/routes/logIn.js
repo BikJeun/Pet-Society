@@ -41,7 +41,11 @@ router.post('/logIn', function(req, res, next) {
       req.session.currentUserZone = data.rows[0].userzone;
       req.session.currentUserName = data.rows[0].name;
       req.session.currentUserType = data.rows[0].accounttype;
-      res.redirect('/home');
+      if (req.session.currentUserType == "PCSAdmin") {
+        res.redirect('/adminhome');
+      } else {
+        res.redirect('/home');
+      }
     } else {
       errMessage.err2 = 'Invalid Login Credentials';
       console.log("\n\nLog In Unsuccessful\n\n");

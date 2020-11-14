@@ -12,6 +12,7 @@ sql.query = {
     update_pcs_admin_email: 'UPDATE PCSAdmin a SET a.email = $2 WHERE a.email = $1',
     update_pcs_admin_password: 'UPDATE PCSAdmin a SET a.password = $2 WHERE a.email = $1',
     update_pcs_admin_address: 'UPDATE PCSAdmin a SET a.address = $2, a.zone = $3 WHERE a.email = $1',
+    update_base_price: 'UPDATE pet SET base_daily_price = $1 WHERE pet_type = $2',
 
     //Caretakers
     create_care_taker: 'INSERT INTO caretaker (email, password, name, address, zone) VALUES ($1,$2,$3,$4,$5) RETURNING *',  
@@ -23,7 +24,7 @@ sql.query = {
     update_care_taker_email: 'UPDATE caretaker c SET c.email = $2 WHERE c.email = $1',
     update_care_taker_password: 'UPDATE caretaker c SET c.password = $2 WHERE c.email = $1',
     update_care_taker_address: 'UPDATE caretaker c SET c.address = $2, c.zone = $3 WHERE c.email = $1',
-
+    search_for_care_taker: "SELECT c.name, c.address, c.zone, (SELECT ROUND(AVG(s.rating),2) FROM bid_service s GROUP BY s.care_taker_email HAVING s.care_taker_email = c.email) AS averagerating, CASE WHEN EXISTS (SELECT 1 FROM parttimer WHERE email = c.email) THEN 'Part Timer' ELSE 'Full Timer' END AS type FROM caretaker c WHERE LOWER(name) LIKE LOWER($1)",
 
     //PetOwners
     create_pet_owner: 'INSERT INTO petowner (email, password, name, address, zone) VALUES ($1,$2,$3,$4,$5) RETURNING *',
@@ -60,14 +61,20 @@ sql.query = {
     retrieve_bid_grouped_by_transport_agreement: 'SELECT * FROM bid_service GROUP BY transport_agreement',
     retrieve_care_taker_filter_by_ratings: 'SELECT b.care_taker_email FROM bid_service b WHERE ratings >= $1 ',
     retreive_review_filter_by_care_taker: 'SELECT b.review FROM bid_service b WHERE b.care_taker_email = $1',
-    retreive_bid_filter_by_month: 'SELECT * FROM bid_service b WHERE accepted = "true" AND EXTRACT(MONTH FROM pickup_date) = $1',
+    retreive_bid_filter_by_month: 'SELECT * FROM bid_service b WHERE accepted = true AND EXTRACT(MONTH FROM pickup_date) = $1',
+    retrieve_pending_bids: 'SELECT b.care_taker_email, b.pet_name, b.pet_type, b.pickup_date, b.duration, b.price, b.transport_agreement FROM bid_service b WHERE b.accepted = false AND b.pickup_date > CURRENT_TIMESTAMP AND b.pet_owner_email = $1 ORDER BY b.pickup_date ASC',
+    retrieve_upcoming_bids: 'SELECT b.care_taker_email, b.pet_name, b.pet_type, b.pickup_date, b.duration, b.price, b.transport_agreement FROM bid_service b WHERE b.accepted = true AND b.pickup_date > CURRENT_TIMESTAMP AND b.pet_owner_email = $1 ORDER BY b.pickup_date ASC',
+    retrieve_complete_bids: 'SELECT b.care_taker_email, b.pet_name, b.pet_type, b.pickup_date, b.duration, b.price, b.transport_agreement FROM bid_service b WHERE b.accepted = true AND b.pickup_date + b.duration < CURRENT_TIMESTAMP AND b.pet_owner_email = $1 ORDER BY b.pickup_date ASC',
+    retrieve_complete_unrated_bids: 'SELECT b.care_taker_email, b.pet_name, b.pet_type, b.pickup_date, b.duration, b.price, b.transport_agreement FROM bid_service b WHERE b.accepted = true AND b.pickup_date + b.duration < CURRENT_TIMESTAMP AND b.pet_owner_email = $1 AND b.rating IS NULL AND b.review IS NULL ORDER BY b.pickup_date ASC',
+    rate_bid: 'UPDATE bid_service SET rating = $8, review = $9 WHERE pet_owner_email = $1 AND care_taker_email = $2 AND pet_name = $3 AND pet_type = $4 AND pickup_date = $5 AND duration = $6 AND price = $7 RETURNING *',
 
     //Rating
     retrieve_avg_rating: 'SELECT ROUND(AVG(s.rating),2) AS average, COUNT(*) AS NUMBER FROM bid_service s GROUP BY s.care_taker_email HAVING s.care_taker_email = $1',
+    retrieve_all_completed_reviews: 'SELECT * FROM bid_service WHERE care_taker_email = $1 AND rating IS NOT NULL AND review IS NOT NULL',
 
     //Price
     retrive_base_price_for_fulltimer: 'SELECT p.pet_type, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1) >= 3 THEN (p.base_daily_price * 1.25) WHEN(SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = $1)  < 3 THEN p.base_daily_price END price FROM pet p WHERE p.name = $2 AND p.pet_type = $3',
-    retrieve_base_price_for_fulltimer_by_pet: 'SELECT c.name, c.address, c.email, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 3 THEN (p.base_daily_price * 1.25) ELSE p.base_daily_price END price, (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) AS rating FROM pet p, fulltimer f INNER JOIN caretaker c ON f.email = c.email WHERE p.pet_name = $1 AND p.pet_type = $2',
+    retrieve_base_price_for_fulltimer_by_pet: 'SELECT c.name, c.address, c.email, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 3 THEN (p.base_daily_price * 1.25) ELSE p.base_daily_price END price, (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) AS rating FROM pet p, fulltimer f INNER JOIN caretaker c ON f.email = c.email WHERE p.pet_name = $1 AND p.pet_type = $2 AND c.email <> $3',
     retrieve_base_price_for_fulltimer_by_pet_no_leave: 'SELECT c.name, c.address, c.email, CASE WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 4 THEN (p.base_daily_price * 1.5) WHEN (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) >= 3 THEN (p.base_daily_price * 1.25) ELSE p.base_daily_price END price, (SELECT ROUND(AVG(s.rating),2) FROM bid_service s WHERE s.care_taker_email = c.email) AS rating FROM pet p, fulltimer f INNER JOIN caretaker c ON f.email = c.email WHERE p.pet_name = $1 AND p.pet_type = $2 AND NOT EXISTS (SELECT 1 FROM leaves l WHERE l.fulltimer_email= c.email AND l.start_date <= DATE($3) + $4::INTEGER AND l.end_date >= $3) AND c.email <> $5',
 
     //CareTakerQueries
@@ -85,8 +92,9 @@ sql.query = {
     create_leave: 'INSERT INTO leaves VALUES ($1, $2, $3, $4) RETURNING *',
 
     //tOTAL NUMBER OF PET (PCS ADMIN SIDE)
-    retrive_total_number_of_pet_taken_care_in_a_month_by_type: 'SELECT b.pet_type, COUNT(b.pet_type) FROM bid_service b WHERE b.accepted = true GROUP BY b.pet_type',
+    retrive_total_number_of_pet_taken_care_by_month: "SELECT to_char(to_timestamp (EXTRACT(MONTH FROM b.pickup_date)::text, 'MM'), 'Month') AS month, COUNT(b.pet_type) FROM bid_service b WHERE b.accepted = true GROUP BY EXTRACT(MONTH FROM b.pickup_date) ORDER BY EXTRACT(MONTH FROM b.pickup_date)",
     
+
     //Month highest number of jobs
     retrieve_month_with_highest_number_of_jobs: "SELECT p.no_of_jobs AS no_of_jobs, to_char(to_timestamp (p.month::text, 'MM'), 'Month') AS month FROM ( SELECT COUNT(*) AS no_of_jobs, EXTRACT(MONTH FROM b.pickup_date) AS month FROM bid_service b WHERE b.accepted = true GROUP BY EXTRACT(MONTH FROM b.pickup_date)) AS p WHERE p.no_of_jobs >= ALL(SELECT COUNT(*) AS no_of_jobs FROM bid_service b WHERE b.accepted = true GROUP BY EXTRACT(MONTH FROM b.pickup_date))",
 

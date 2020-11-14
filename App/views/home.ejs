@@ -57,10 +57,14 @@
           <button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Add a new Pet</button>
         </form>
         <form method="get" action="/home/updatePet">
-          <button style="margin-top: 10px; margin-bottom: 30px;" type="submit" class="btn btn-primary" >Update Pet</button>
+          <button style="margin-top: 10px; margin-bottom: 50px;" type="submit" class="btn btn-primary" >Update Pet</button>
         </form>
 
-        
+        <form id="html_form" action="/home/searchct" role="form" method="post">
+          <label for="reason">Name</label>
+          <input style="width: 20%;" id="name" name="name" placeholder="Enter search name">
+          <button type="submit" class="btn btn-primary">Search for caretaker</button>
+        </form> 
         <h2 style="text-align: center; text-decoration: underline;">Caretakers Nearby</h2>
         <table class="table" >
           <caption style="caption-side: top; text-align: center;">Full time caretakers nearby</caption>
@@ -93,7 +97,6 @@
           </tbody>
         </table>
 
-
         <table class="table" >
           <caption style="caption-side: top; text-align: center;">Part time caretakers nearby</caption>
           <thead>
@@ -125,12 +128,115 @@
           </tbody>
         </table>
         <form method="get" action="/home/makeBid">
-          <button style="margin-top: 10px;" type="submit" class="btn btn-primary" >Make a bid</button>
-        </form>
-        <form method="get" action="/home/makeBid">
-          <button style="margin-top: 10px; margin-bottom: 30px;" type="submit" class="btn btn-primary" >Search for caretaker</button>
+          <button style="margin-top: 10px; margin-bottom: 10px;" type="submit" class="btn btn-primary" >Make a bid</button>
         </form>
 
+        
+        <table class="table" >
+          <caption style="caption-side: top; text-align: center;">Pending Bids</caption>
+          <thead>
+            <tr>
+              <th scope="col">No</th>
+              <th scope="col">Pet Name</th>
+              <th scope="col">Pet Type</th>
+              <th scope="col">Pick Up Date</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Price</th>
+              <th scope="col">Transport Agreement</th>
+            </tr>
+          </thead>
+          <tbody> 
+            <% if (pendingBids.length == 0) { %>
+              <tr><td colspan="7" style="text-align: center; color: darkgrey">None</td></tr>
+              <% } else { %>
+            <% for(var i=0; i<pendingBids.length; i++) {%>
+            <tr>
+              <form>
+                <td><%= i+1%></td>
+                <td><%= pendingBids[i].pet_name%></td>
+                <td><%= pendingBids[i].pet_type%></td>
+                <td><%= pendingBids[i].pickup_date.toDateString()%></td>
+                <td><%= pendingBids[i].duration%></td>
+                <td><%= pendingBids[i].price%></td>
+                <td><%= pendingBids[i].transport_agreement%></td>
+              </form>
+            </tr>
+            <% }} %>
+          </tbody>
+        </table>
+
+        <table class="table" >
+          <caption style="caption-side: top; text-align: center;">Upcoming Services</caption>
+          <thead>
+            <tr>
+              <th scope="col">No</th>
+              <th scope="col">Pet Name</th>
+              <th scope="col">Pet Type</th>
+              <th scope="col">Pick Up Date</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Price</th>
+              <th scope="col">Transport Agreement</th>
+            </tr>
+          </thead>
+          <tbody> 
+            <% if (upcomingBids.length == 0) { %>
+              <tr><td colspan="7" style="text-align: center; color: darkgrey">None</td></tr>
+              <% } else { %>
+            <% for(var i=0; i<upcomingBids.length; i++) {%>
+            <tr>
+              <form>
+                <td><%= i+1%></td>
+                <td><%= upcomingBids[i].pet_name%></td>
+                <td><%= upcomingBids[i].pet_type%></td>
+                <td><%= upcomingBids[i].pickup_date.toDateString()%></td>
+                <td><%= upcomingBids[i].duration%></td>
+                <td><%= upcomingBids[i].price%></td>
+                <td><%= upcomingBids[i].transport_agreement%></td>
+              </form>
+            </tr>
+            <% }} %>
+          </tbody>
+        </table>
+
+        <table class="table" >
+          <caption style="caption-side: top; text-align: center;">Completed Services</caption>
+          <thead>
+            <tr>
+              <th scope="col">No</th>
+              <th scope="col">Pet Name</th>
+              <th scope="col">Pet Type</th>
+              <th scope="col">Pick Up Date</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Price</th>
+              <th scope="col">Transport Agreement</th>
+            </tr>
+          </thead>
+          <tbody> 
+            <% if (completedBids.length == 0) { %>
+              <tr><td colspan="7" style="text-align: center; color: darkgrey">None</td></tr>
+              <% } else { %>
+            <% for(var i=0; i<completedBids.length; i++) {%>
+            <tr>
+              <form>
+                <td><%= i+1%></td>
+                <td><%= completedBids[i].pet_name%></td>
+                <td><%= completedBids[i].pet_type%></td>
+                <td><%= completedBids[i].pickup_date.toDateString()%></td>
+                <td><%= completedBids[i].duration%></td>
+                <td><%= completedBids[i].price%></td>
+                <td><%= completedBids[i].transport_agreement%></td>
+              </form>
+            </tr>
+            <% }} %>
+          </tbody>
+        </table>
+        <form method="get" action="/home/rateservice">
+          <button style="margin-top: 10px; margin-bottom: 10px;" type="submit" class="btn btn-primary" >Rate a completed service</button>
+        </form>
+
+
+
+    
 		
   </body>
 </html>

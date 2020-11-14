@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<!-- Page Title -->
+    <title>Rate Service</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+		
+		<!-- CSS for Styling -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		
+		<!-- JavaScript for Interactivity -->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+		<!-- ADDED JavaScript -->
+    
+  </head>
+  <body> 
+    <form method="get" action="/home">
+      <button style="position: absolute; right: 2%; " type="submit" class="btn btn-primary" >Back</button>
+    </form>
+
+    <h1>Rate a completed service!</h1>    
+    <h3 style="color: darkgrey">Only unrated completed services will show up to be rated</h3>
+
+    <h2 style="text-align: center; text-decoration: underline;">Completed Services</h2>
+    <table class="table" >
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Caretaker</th>
+            <th scope="col">Pet Name</th>
+            <th scope="col">Pet Type</th>
+            <th scope="col">Pick Up Date</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Price</th>
+            <th scope="col">Transport Agreement</th>
+          </tr>
+        </thead>
+        <tbody> 
+          <% if (bids.length == 0) { %>
+            <tr><td colspan="8" style="text-align: center; color: darkgrey">None</td></tr>
+            <% } else { %>
+          <% for(var i=0; i<bids.length; i++) {%>
+          <tr>
+            <form>
+              <td><%= i+1%></td>
+              <td><%= bids[i].care_taker_email%></td>
+              <td><%= bids[i].pet_name%></td>
+              <td><%= bids[i].pet_type%></td>
+              <td><%= bids[i].pickup_date.toDateString()%></td>
+              <td><%= bids[i].duration%></td>
+              <td><%= bids[i].price%></td>
+              <td><%= bids[i].transport_agreement%></td>
+            </form>
+          </tr>
+          <% }} %>
+        </tbody>
+      </table>
+
+    <form id="html_form" action="rateservice" role="form" method="post">
+        <div class="form-group">
+            <label for="name">Service No</label>
+            <input class="form-control" id="no" name="no" placeholder="Enter service number (as displayed above)">
+        </div>
+        <label for="name">Review</label>
+        <input class="form-control" id="review" name="review" placeholder="Enter your review">
+        <div class="form-group">
+            <p>Rating</p>
+            <input type="radio" name="chooseone" value="1" checked><label for="1"> 1</label><br>
+            <input type="radio" name="chooseone" value="2"><label for="2"> 2</label><br>
+            <input type="radio" name="chooseone" value="3"><label for="3"> 3</label><br>
+            <input type="radio" name="chooseone" value="4"><label for="4"> 4</label><br>
+            <input type="radio" name="chooseone" value="5"><label for="5"> 5</label><br>
+        </div>
+        <button type="submit" class="btn btn-primary">Proceed</button>
+    </form>
+
+
+
+
+		
+  </body>
+</html>

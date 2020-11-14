@@ -12,6 +12,7 @@ var logInRouter = require('./routes/logIn');
 var usersRouter = require('./routes/users');
 var homeRouter = require('./routes/home');
 var caretakerhomeRouter = require('./routes/caretakerhome');
+var adminhomeRouter = require('./routes/adminhome');
 
 var app = express();
 
@@ -31,6 +32,7 @@ app.use('/', logInRouter);
 app.use('/users', usersRouter);
 app.use('/home', homeRouter);
 app.use('/caretakerhome', caretakerhomeRouter);
+app.use('/adminhome', adminhomeRouter);
 
 /* --- V6: Modify Database  --- */
 var bodyParser = require('body-parser');
